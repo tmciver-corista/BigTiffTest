@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-tiff-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalframework-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/jai_codec.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/jai_core.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-arcgrid-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdal-bindings-1.7.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalarcbinarygrid-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalarcgrid-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalbsb-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdaldoq1-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdaldoq2-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdaldted-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalecw-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalecwjp2-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalehdr-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalenvihdr-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalenvisat-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalerdasimg-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalgeotiff-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalidrisi-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdaljpeg-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalkakadujp2-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalmrsid-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalmrsidjp2-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-gdalnitf-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-geocore-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-imagereadmt-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-kakadu-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-kakadujni-5.2.6.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-streams-1.1.2.jar"/>
+	<classpathentry kind="lib" path="/Users/tmciver/Documents/workspace/bigtiff-test/lib/imageio-ext-utilities-1.1.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
