@@ -3,18 +3,12 @@ package com.corista.bigtifftest;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader;
 import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReaderSpi;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.image.RenderedImage;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-import javax.imageio.ImageReader;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-
-import com.sun.media.jai.widget.DisplayJAI;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageInputStream;
 
 public class App {
 
@@ -34,34 +28,50 @@ public class App {
 		String tiffPath = args[0];
 		
 		// create a reader
-		ImageReader rdr = new TIFFImageReaderSpi().createReaderInstance(new Object());
-		TIFFImageReader tiffRdr = null;
-		if (rdr instanceof TIFFImageReader) {
-			System.out.println("It's a TIFFImageReader!");
-			tiffRdr = (TIFFImageReader)rdr;
+		TIFFImageReader tiffRdr = (TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance(new Object());
+		tiffRdr.setInput(new FileImageInputStream(new File(tiffPath)));
+		
+		int tileWidth = tiffRdr.getTileWidth(0);
+		int tileHeight = tiffRdr.getTileHeight(0);
+		
+		int xTiles = tiffRdr.getWidth(0) / tiffRdr.getTileWidth(0);
+		int yTiles = tiffRdr.getHeight(0) / tiffRdr.getTileHeight(0);
+		
+		// set up tile indices for sub-image
+		int topLeftTileX = 0;
+		int topLeftTileY = 0;
+		int subImageTilesX = xTiles;
+		int subImageTilesY = yTiles;
+		
+		int numTiles = xTiles * yTiles;
+		System.out.println("Tile width: " + tileWidth + ", tile height: " + tileHeight);
+		System.out.println("Image width: " + xTiles + ", image height: " + yTiles);
+		int[] bitmapData = new int[3 * xTiles * yTiles];
+		
+		for (int yTile = topLeftTileY; yTile < topLeftTileY + subImageTilesY; yTile++) {
+			for (int xTile = topLeftTileX; xTile < topLeftTileX + subImageTilesX; xTile++) {
+				try {
+					System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
+					BufferedImage image = tiffRdr.readTile(0, xTile, yTile);
+				} catch (Exception e) {
+					System.err.println("Caught an exception while trying to read a tile; continuing.");
+					continue;
+				}
+				
+				int numTilesSoFar = yTile * xTiles + xTile;
+				System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
+				
+				// it was a successful read
+				int pixelCoord = 3 * (yTile * xTiles + xTile);
+				bitmapData[pixelCoord] = 0xFF;
+				bitmapData[pixelCoord + 1] = 0xFF;
+				bitmapData[pixelCoord + 2] = 0xFF;
+			}
 		}
-		tiffRdr.setInput(new File(tiffPath));
 		
-		// read the image
-		RenderedImage image = rdr.read(0);
+		BufferedImage bitmap = new BufferedImage(xTiles, yTiles, BufferedImage.TYPE_INT_RGB);
+		bitmap.getRaster().setPixels(0, 0, xTiles, yTiles, bitmapData);
 		
-		// Create a frame for display.
-		JFrame frame = new JFrame();
-		frame.setTitle("DisplayJAI: "+args[0]);
-		// Get the JFrame's ContentPane.
-		Container contentPane = frame.getContentPane();
-		contentPane.setLayout(new BorderLayout());
-		// Create an instance of DisplayJAI.
-		DisplayJAI dj = new DisplayJAI(image);
-		// Add to the JFrame's ContentPane an instance of JScrollPane containing the
-		// DisplayJAI instance.
-		contentPane.add(new JScrollPane(dj),BorderLayout.CENTER);
-		// Add a text label with the image information.
-		//contentPane.add(new JLabel(imageInfo),BorderLayout.SOUTH);
-		// Set the closing operation so the application is finished.
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(400,400); // adjust the frame size.
-		frame.setVisible(true); // show the frame.
+		ImageIO.write(bitmap, "jpg", new File(new File(tiffPath).getParent(), "tile-pass-fail.jpg"));
 	}
-
 }
