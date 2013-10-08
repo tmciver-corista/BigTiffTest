@@ -11,16 +11,18 @@ import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
 
 public class App {
+	
+	private static final String USAGE = App.class.getName() + " </path/to/tiff-file> [-m (print meta data and exit)]";
 
 	/**
 	 * @param args
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws IOException {
-		
+
 		// validate args
 		if (args.length < 1) {
-			System.err.println("Must supply a path to a BigTIFF file.");
+			System.err.println(USAGE);
 			return;
 		}
 		
@@ -31,6 +33,21 @@ public class App {
 		TIFFImageReader tiffRdr = (TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance(new Object());
 		tiffRdr.setInput(new FileImageInputStream(new File(tiffPath)));
 		
+		// should we print the meta data?
+		if (args.length == 2) {
+			if (args[1].equals("-m")) {
+				System.out.println(new TIFFMetaData(tiffRdr));
+			} else {
+				System.err.println("Invalid argument: " + args[1]);
+				System.err.println(USAGE);
+			}
+			return;
+		} else if (args.length > 2) {
+			System.err.println("Too many arguments provided.");
+			System.err.println(USAGE);
+			return;
+		}
+
 		int tileWidth = tiffRdr.getTileWidth(0);
 		int tileHeight = tiffRdr.getTileHeight(0);
 		
