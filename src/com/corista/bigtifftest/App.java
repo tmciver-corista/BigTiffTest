@@ -60,48 +60,79 @@ public class App {
 			System.err.println(USAGE);
 			return;
 		}
-
-		int tileWidth = tiffRdr.getTileWidth(0);
-		int tileHeight = tiffRdr.getTileHeight(0);
 		
-		int xTiles = tiffRdr.getWidth(0) / tiffRdr.getTileWidth(0);
-		int yTiles = tiffRdr.getHeight(0) / tiffRdr.getTileHeight(0);
-		
-		// set up tile indices for sub-image
-		int topLeftTileX = 0;
-		int topLeftTileY = 0;
-		int subImageTilesX = xTiles;
-		int subImageTilesY = yTiles;
-		
-		int numTiles = xTiles * yTiles;
-		System.out.println("Tile width: " + tileWidth + ", tile height: " + tileHeight);
-		System.out.println("Image width: " + xTiles + ", image height: " + yTiles);
-		int[] bitmapData = new int[3 * xTiles * yTiles];
-		
-		for (int yTile = topLeftTileY; yTile < topLeftTileY + subImageTilesY; yTile++) {
-			for (int xTile = topLeftTileX; xTile < topLeftTileX + subImageTilesX; xTile++) {
-				try {
-					System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
-					BufferedImage image = tiffRdr.readTile(0, xTile, yTile);
-				} catch (Exception e) {
-					System.err.println("Caught an exception while trying to read a tile; continuing.");
-					continue;
-				}
-				
-				int numTilesSoFar = yTile * xTiles + xTile;
-				System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
-				
-				// it was a successful read
-				int pixelCoord = 3 * (yTile * xTiles + xTile);
-				bitmapData[pixelCoord] = 0xFF;
-				bitmapData[pixelCoord + 1] = 0xFF;
-				bitmapData[pixelCoord + 2] = 0xFF;
-			}
+		// create the output directory
+		File outputDir = new File(tiffPath.substring(0, tiffPath.lastIndexOf('.')) + "_tiles");
+		if (!outputDir.mkdir()) {
+			System.err.println("Could not create output directory.");
+			return;
 		}
 		
-		BufferedImage bitmap = new BufferedImage(xTiles, yTiles, BufferedImage.TYPE_INT_RGB);
-		bitmap.getRaster().setPixels(0, 0, xTiles, yTiles, bitmapData);
+		// create a TileWriter
+		TileWriter tileWriter = new TileWriter(outputDir);
 		
-		ImageIO.write(bitmap, "jpg", new File(new File(tiffPath).getParent(), "tile-pass-fail.jpg"));
+		// loop over all image planes
+		for (int imagePlane = 0; imagePlane < tiffRdr.getNumImages(true); imagePlane++) {
+			
+			// only process image planes that are tiled
+			if (!tiffRdr.isImageTiled(imagePlane)) {
+				continue;
+			}
+			
+			// calc x and y tiles
+			int xTiles = (int)Math.ceil((double)tiffRdr.getWidth(imagePlane) / tiffRdr.getTileWidth(imagePlane));
+			int yTiles = (int)Math.ceil((double)tiffRdr.getHeight(imagePlane) / tiffRdr.getTileHeight(imagePlane));
+			int numTiles = xTiles * yTiles;
+			
+			// read all tiles
+			for (int yTile = 0; yTile < yTiles; yTile++) {
+				for (int xTile = 0; xTile < xTiles; xTile++) {
+					BufferedImage image = null;
+					try {
+						System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
+						image = tiffRdr.readTile(imagePlane, xTile, yTile);
+					} catch (Exception e) {
+						System.err.println("Caught an exception while trying to read tile at image level " + imagePlane + ", x = " + xTile + ", y = " + yTile + "; continuing.");
+						continue;
+					}
+					
+					//int numTilesSoFar = yTile * xTiles + xTile;
+					//System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
+					
+					// write the tile
+					try {
+						tileWriter.write(image, imagePlane, xTile, yTile);
+					} catch (IOException e) {
+						System.err.println("Caught exception while trying to write tile imaege to file.");
+						continue;
+					}
+				}
+			}
+		}
+	}
+}
+
+class TileWriter {
+	
+	private File outputDir;
+	
+	/**
+	 * @param outputDir
+	 */
+	public TileWriter(File outputDir) {
+		this.outputDir = outputDir;
+	}
+
+	public void write(BufferedImage tileImage, int level, int x, int y) throws IOException {
+		
+		// create the directory for the level if it does not exist
+		File levelDir = new File(outputDir, Integer.toString(level));
+		levelDir.mkdir();
+		
+		// create a file object for the image to be written
+		File imageFile = new File(levelDir, x + "_" + y + ".jpg");
+		
+		// write the image to file
+		ImageIO.write(tileImage, "jpg", imageFile);
 	}
 }
