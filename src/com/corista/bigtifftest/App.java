@@ -33,6 +33,19 @@ public class App {
 		TIFFImageReader tiffRdr = (TIFFImageReader)new TIFFImageReaderSpi().createReaderInstance(new Object());
 		tiffRdr.setInput(new FileImageInputStream(new File(tiffPath)));
 		
+		// we will continue only if all image planes are tiled
+		boolean noImagesAreTiled = true;
+		for (int imageNum = 0; imageNum < tiffRdr.getNumImages(true); imageNum++) {
+			if (tiffRdr.isImageTiled(imageNum)) {
+				System.out.println("Image plane " + imageNum + " is not tiled.");
+				noImagesAreTiled = false;
+			}
+		}
+		if (noImagesAreTiled) {
+			System.err.println("No tiled image planes found. Aborting.");
+			return;
+		}
+		
 		// should we print the meta data?
 		if (args.length == 2) {
 			if (args[1].equals("-m")) {
