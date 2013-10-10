@@ -37,7 +37,7 @@ public class App {
 		boolean noImagesAreTiled = true;
 		for (int imageNum = 0; imageNum < tiffRdr.getNumImages(true); imageNum++) {
 			if (tiffRdr.isImageTiled(imageNum)) {
-				System.out.println("Image plane " + imageNum + " is not tiled.");
+				//System.out.println("Image plane " + imageNum + " is not tiled.");
 				noImagesAreTiled = false;
 			}
 		}
@@ -71,41 +71,79 @@ public class App {
 		// create a TileWriter
 		TileWriter tileWriter = new TileWriter(outputDir);
 		
+		// progress
+		String progressFormatStr = "%.1f%% complete";
+		String progressString = String.format(progressFormatStr, 0.0);
+		System.out.print(progressString);
+		
 		// loop over all image planes
+		int numTiles = new TIFFMetaData(tiffRdr).getTotalNumberOfTiles();
+		int numTilesSoFar = 0;
 		for (int imagePlane = 0; imagePlane < tiffRdr.getNumImages(true); imagePlane++) {
 			
-			// only process image planes that are tiled
-			if (!tiffRdr.isImageTiled(imagePlane)) {
-				continue;
-			}
-			
-			// calc x and y tiles
-			int xTiles = (int)Math.ceil((double)tiffRdr.getWidth(imagePlane) / tiffRdr.getTileWidth(imagePlane));
-			int yTiles = (int)Math.ceil((double)tiffRdr.getHeight(imagePlane) / tiffRdr.getTileHeight(imagePlane));
-			int numTiles = xTiles * yTiles;
-			
-			// read all tiles
-			for (int yTile = 0; yTile < yTiles; yTile++) {
-				for (int xTile = 0; xTile < xTiles; xTile++) {
-					BufferedImage image = null;
-					try {
-						System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
-						image = tiffRdr.readTile(imagePlane, xTile, yTile);
-					} catch (Exception e) {
-						System.err.println("Caught an exception while trying to read tile at image level " + imagePlane + ", x = " + xTile + ", y = " + yTile + "; continuing.");
-						continue;
+			// processing differs depending on whether this plane is tiled or not
+			BufferedImage image = null;
+			if (tiffRdr.isImageTiled(imagePlane)) {
+				
+				// calc x and y tiles
+				int xTiles = (int)Math.ceil((double)tiffRdr.getWidth(imagePlane) / tiffRdr.getTileWidth(imagePlane));
+				int yTiles = (int)Math.ceil((double)tiffRdr.getHeight(imagePlane) / tiffRdr.getTileHeight(imagePlane));
+				
+				// read all tiles
+				for (int yTile = 0; yTile < yTiles; yTile++) {
+					for (int xTile = 0; xTile < xTiles; xTile++) {
+						try {
+							//System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
+							image = tiffRdr.readTile(imagePlane, xTile, yTile);
+						} catch (Exception e) {
+							//System.err.println("Caught an exception while trying to read tile at image level " + imagePlane + ", x = " + xTile + ", y = " + yTile + "; continuing.");
+							continue;
+						}
+						
+						numTilesSoFar = yTile * xTiles + xTile;
+						//System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
+						
+						// write the tile
+						try {
+							tileWriter.write(image, imagePlane, xTile, yTile);
+						} catch (IOException e) {
+							//System.err.println("Caught exception while trying to write tile imaege to file.");
+							continue;
+						}
+						
+						// update progress reporting
+						int progressStringLength = progressString.length();
+						while (progressStringLength-- > 0) {
+							System.out.print("\b");
+						}
+						progressString = String.format(progressFormatStr, (double)numTilesSoFar++/numTiles*100.0);
+						System.out.print(progressString);
 					}
+				}
+			} else {
+				try {
+					image = tiffRdr.read(imagePlane);
 					
-					//int numTilesSoFar = yTile * xTiles + xTile;
+					numTilesSoFar += 1;
 					//System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
 					
 					// write the tile
 					try {
-						tileWriter.write(image, imagePlane, xTile, yTile);
+						tileWriter.write(image, imagePlane, 0, 0);
 					} catch (IOException e) {
-						System.err.println("Caught exception while trying to write tile imaege to file.");
+						//System.err.println("Caught exception while trying to write tile imaege to file.");
 						continue;
 					}
+					
+					// update progress reporting
+					int progressStringLength = progressString.length();
+					while (progressStringLength-- > 0) {
+						System.out.print("\b");
+					}
+					progressString = String.format(progressFormatStr, (double)numTilesSoFar++/numTiles*100.0);
+					System.out.print(progressString);
+				} catch (IOException e) {
+					continue;
 				}
 			}
 		}

@@ -16,25 +16,28 @@ import javax.imageio.stream.FileImageInputStream;
 public class TIFFMetaData {
 	
 	private String desc;
+	private int totalNumberOfTiles;
 
 	/**
+	 * @throws IOException 
 	 * 
 	 */
-	public TIFFMetaData(TIFFImageReader tiffReader) {
+	public TIFFMetaData(TIFFImageReader tiffReader) throws IOException {
 
-		String tiffFile = ((FileImageInputStream) tiffReader.getInput()).toString();
-		int numImages = -1;
-		try {
-			numImages = tiffReader.getNumImages(true);
-		} catch (IOException e) {
-			// do nothing
-		}
-		
+		int numImages = tiffReader.getNumImages(true);
+		totalNumberOfTiles = 0;
+
 		desc = "TIFF file has " + numImages + " images\n";
 		
 		for (int imageNum = 0; imageNum < numImages; imageNum++) {
-			desc += new TIFFImagePlaneMetaData(tiffReader, imageNum).toString() + "\n";
+			TIFFImagePlaneMetaData imageMeta = new TIFFImagePlaneMetaData(tiffReader, imageNum);
+			desc += imageMeta.toString() + "\n";
+			totalNumberOfTiles += imageMeta.getNumberOfTiles();
 		}
+	}
+	
+	public int getTotalNumberOfTiles() {
+		return totalNumberOfTiles;
 	}
 
 	@Override
@@ -46,38 +49,22 @@ public class TIFFMetaData {
 class TIFFImagePlaneMetaData {
 	
 	private String desc;
+	private int numberOfTiles;	// 1 when the image is not tiled
 
 	/**
+	 * @throws IOException 
 	 * 
 	 */
-	public TIFFImagePlaneMetaData(TIFFImageReader tiffReader, int imageNumber) {
+	public TIFFImagePlaneMetaData(TIFFImageReader tiffReader, int imageNumber) throws IOException {
 		
-		int xTiles = -1;
-		int yTiles = -1;
-		try {
-			xTiles = tiffReader.getWidth(imageNumber) / tiffReader.getTileWidth(imageNumber);
-			yTiles = tiffReader.getHeight(imageNumber) / tiffReader.getTileHeight(imageNumber);
-		} catch (IOException e) {
-			// do nothing
-		}
-		
-		int tileHeight = -1;
-		int tileWidth = -1;
-		try {
-			tileHeight = tiffReader.getTileHeight(imageNumber);
-			tileWidth = tiffReader.getTileWidth(imageNumber);
-		} catch (IOException e) {
-			// do nothing
-		}
-		
-		int imageWidth = -1;
-		int imageHeight = -1;
-		try {
-			imageWidth = tiffReader.getWidth(imageNumber);
-			imageHeight = tiffReader.getHeight(imageNumber);
-		} catch (IOException e) {
-			// do nothing
-		}
+		int xTiles = tiffReader.getWidth(imageNumber) / tiffReader.getTileWidth(imageNumber);
+		int yTiles = tiffReader.getHeight(imageNumber) / tiffReader.getTileHeight(imageNumber);
+
+		int tileHeight = tiffReader.getTileHeight(imageNumber);
+		int tileWidth = tiffReader.getTileWidth(imageNumber);
+
+		int imageWidth = tiffReader.getWidth(imageNumber);
+		int imageHeight = tiffReader.getHeight(imageNumber);
 
 		desc = "\tImage level " + imageNumber + "\n"
 				+ "\t\tTile size: " + tileHeight + "x" + tileWidth + "\n"
@@ -85,6 +72,16 @@ class TIFFImagePlaneMetaData {
 				+ "\t\tNumber of Y tiles: " + yTiles+ "\n"
 				+ "\t\tImage width: " + imageWidth+ "\n"
 				+ "\t\tImage height: " + imageHeight;
+		
+		// calc the number of tiles
+		numberOfTiles = 1;
+		if (tiffReader.isImageTiled(imageNumber)) {
+			numberOfTiles = xTiles * yTiles;
+		}
+	}
+	
+	public int getNumberOfTiles() {
+		return numberOfTiles;
 	}
 
 	@Override
