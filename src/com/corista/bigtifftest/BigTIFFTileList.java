@@ -7,14 +7,13 @@ import it.geosolutions.imageioimpl.plugins.tiff.TIFFImageReader;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.AbstractList;
 
 /**
  * @author tmciver
  *
  */
-public class BigTIFFTileList implements Iterable<Tile> {
+public class BigTIFFTileList extends AbstractList<Tile> {
 	
 	private TIFFImageReader tiffReader;
 	private int imagePlane;
@@ -38,63 +37,34 @@ public class BigTIFFTileList implements Iterable<Tile> {
 		return imagePlane;
 	}
 	
+	@Override
 	public int size() {
 		return xTiles * yTiles;
 	}
 
 	@Override
-	public Iterator<Tile> iterator() {
-
-		return new Iterator<Tile>() {
-			
-			private int xTile = 0, yTile = 0;
-
-			@Override
-			public boolean hasNext() {
-				return !pastEndOfTileArray();
+	public Tile get(int index) {
+		
+		if (index < 0 || index >= size()) {
+			throw new IndexOutOfBoundsException();
+		}
+		
+		// convert index to row major tile indices
+		int yTile = index / xTiles;
+		int xTile = index % xTiles;
+		
+		// get the image tile
+		BufferedImage tileImage = null;
+		try {
+			if (tiffReader.isImageTiled(imagePlane)) {
+				tileImage = tiffReader.readTile(imagePlane, xTile, yTile);
+			} else {
+				tileImage = tiffReader.read(imagePlane);
 			}
+		} catch (Exception e) {
+			// do nothing
+		}
 
-			@Override
-			public Tile next() {
-
-				if (pastEndOfTileArray()) {
-					throw new NoSuchElementException();
-				}
-				
-				// get the image tile
-				BufferedImage tileImage = null;
-				try {
-					if (tiffReader.isImageTiled(imagePlane)) {
-						tileImage = tiffReader.readTile(imagePlane, xTile, yTile);
-					} else {
-						tileImage = tiffReader.read(imagePlane);
-					}
-				} catch (Exception e) {
-					// do nothing
-				} finally {
-					incrementTileIndices();
-				}
-
-				return new Tile(tileImage, imagePlane, xTile, yTile);
-			}
-			
-			private void incrementTileIndices() {
-				if (++xTile == xTiles) {
-					xTile = 0;
-					yTile++;
-				}
-			}
-			
-			private boolean pastEndOfTileArray() {
-				return yTile >= yTiles ||
-						(yTile == yTiles - 1 && xTile >= xTiles);
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Removing tiles not supported.");
-			}
-		};
+		return new Tile(tileImage, imagePlane, xTile, yTile);
 	}
-
 }
