@@ -79,74 +79,33 @@ public class App {
 		// loop over all image planes
 		int numTiles = new TIFFMetaData(tiffRdr).getTotalNumberOfTiles();
 		int numTilesSoFar = 0;
-		for (int imagePlane = 0; imagePlane < tiffRdr.getNumImages(true); imagePlane++) {
-			
-			// processing differs depending on whether this plane is tiled or not
-			BufferedImage image = null;
-			if (tiffRdr.isImageTiled(imagePlane)) {
-				
-				// calc x and y tiles
-				int xTiles = (int)Math.ceil((double)tiffRdr.getWidth(imagePlane) / tiffRdr.getTileWidth(imagePlane));
-				int yTiles = (int)Math.ceil((double)tiffRdr.getHeight(imagePlane) / tiffRdr.getTileHeight(imagePlane));
-				
-				// read all tiles
-				for (int yTile = 0; yTile < yTiles; yTile++) {
-					for (int xTile = 0; xTile < xTiles; xTile++) {
-						try {
-							//System.out.println("Reading tile (" + xTile + ", " + yTile + ")");
-							image = tiffRdr.readTile(imagePlane, xTile, yTile);
-						} catch (Exception e) {
-							//System.err.println("Caught an exception while trying to read tile at image level " + imagePlane + ", x = " + xTile + ", y = " + yTile + "; continuing.");
-							continue;
-						}
-						
-						numTilesSoFar = yTile * xTiles + xTile;
-						//System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
-						
-						// write the tile
-						try {
-							tileWriter.write(image, imagePlane, xTile, yTile);
-						} catch (IOException e) {
-							//System.err.println("Caught exception while trying to write tile imaege to file.");
-							continue;
-						}
-						
-						// update progress reporting
-						int progressStringLength = progressString.length();
-						while (progressStringLength-- > 0) {
-							System.out.print("\b");
-						}
-						progressString = String.format(progressFormatStr, (double)numTilesSoFar++/numTiles*100.0);
-						System.out.print(progressString);
-					}
+		for (BigTIFFTileList tileList : new BigTIFFImageList(tiffRdr)) {
+			for (Tile tile : tileList) {
+
+				// update progress reporting
+				int progressStringLength = progressString.length();
+				while (progressStringLength-- > 0) {
+					System.out.print("\b");
 				}
-			} else {
+				progressString = String.format(progressFormatStr, (double)numTilesSoFar++/numTiles*100.0);
+				System.out.print(progressString);
+				
+				// null?
+				if (tile.getImage() == null) {
+					continue;
+				}
+				
+				// write the tile
 				try {
-					image = tiffRdr.read(imagePlane);
-					
-					numTilesSoFar += 1;
-					//System.out.println("Successful read! Read tile " + numTilesSoFar + " of " + numTiles + " (" + 100.0 * numTilesSoFar / numTiles + "%)");
-					
-					// write the tile
-					try {
-						tileWriter.write(image, imagePlane, 0, 0);
-					} catch (IOException e) {
-						//System.err.println("Caught exception while trying to write tile imaege to file.");
-						continue;
-					}
-					
-					// update progress reporting
-					int progressStringLength = progressString.length();
-					while (progressStringLength-- > 0) {
-						System.out.print("\b");
-					}
-					progressString = String.format(progressFormatStr, (double)numTilesSoFar++/numTiles*100.0);
-					System.out.print(progressString);
+					tileWriter.write(tile.getImage(), tile.getLevel(), tile.getX(), tile.getY());
 				} catch (IOException e) {
+					//System.err.println("Caught exception while trying to write tile image to file.");
 					continue;
 				}
 			}
 		}
+		
+		System.out.println();
 	}
 }
 
